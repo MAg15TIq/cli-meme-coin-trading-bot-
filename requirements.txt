@@ -1,0 +1,16 @@
+solana==0.30.2
+solders>=0.18.0
+textual>=0.38.1
+rich>=13.4.2
+cryptography>=41.0.3
+pycryptodome>=3.18.0
+requests>=2.31.0
+python-dotenv>=1.0.0
+websockets>=11.0.3
+numpy>=1.24.0
+pandas>=2.0.0
+scikit-learn>=1.2.0
+matplotlib>=3.7.0
+qrcode>=7.4.0
+pillow>=9.5.0
+firebase-admin>=6.1.0
