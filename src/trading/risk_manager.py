@@ -1,7 +1,6 @@
 """
-Risk management module for the Solana Memecoin Trading Bot.
-Provides comprehensive risk assessment, position sizing, and portfolio management.
-Includes refinement capabilities based on real-world usage.
+Enhanced risk management module for the Solana Memecoin Trading Bot.
+Implements dynamic position sizing, advanced stop-loss mechanisms, and risk scoring.
 """
 
 import json
@@ -13,59 +12,28 @@ from typing import Dict, Any, Optional, List, Union, Tuple
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
+import numpy as np
+from dataclasses import dataclass
 
 from config import get_config_value, update_config
 from src.utils.logging_utils import get_logger
 from src.trading.token_analytics import token_analytics
 from src.trading.position_manager import RiskLevel
 from src.wallet.wallet import wallet_manager
+from src.utils.performance_optimizer import cache_result, parallel_processing
+from src.trading.technical_analysis import technical_analyzer
 
 # Get logger for this module
 logger = get_logger(__name__)
 
-
-class RiskProfile:
-    """Represents a risk profile with specific parameters."""
-
-    def __init__(self, name: str, max_allocation_percent: float, max_position_percent: float,
-                 stop_loss_percent: float, max_drawdown_percent: float):
-        """
-        Initialize a risk profile.
-
-        Args:
-            name: The name of the profile (conservative, moderate, aggressive)
-            max_allocation_percent: Maximum percentage of portfolio to allocate to risky assets
-            max_position_percent: Maximum percentage of portfolio for a single position
-            stop_loss_percent: Default stop-loss percentage for positions
-            max_drawdown_percent: Maximum acceptable drawdown before reducing exposure
-        """
-        self.name = name
-        self.max_allocation_percent = max_allocation_percent
-        self.max_position_percent = max_position_percent
-        self.stop_loss_percent = stop_loss_percent
-        self.max_drawdown_percent = max_drawdown_percent
-
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary for serialization."""
-        return {
-            "name": self.name,
-            "max_allocation_percent": self.max_allocation_percent,
-            "max_position_percent": self.max_position_percent,
-            "stop_loss_percent": self.stop_loss_percent,
-            "max_drawdown_percent": self.max_drawdown_percent
-        }
-
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'RiskProfile':
-        """Create from dictionary."""
-        return cls(
-            name=data["name"],
-            max_allocation_percent=data["max_allocation_percent"],
-            max_position_percent=data["max_position_percent"],
-            stop_loss_percent=data["stop_loss_percent"],
-            max_drawdown_percent=data["max_drawdown_percent"]
-        )
-
+@dataclass
+class RiskMetrics:
+    volatility: float
+    liquidity_score: float
+    holder_distribution: float
+    contract_risk: float
+    social_sentiment: float
+    overall_risk_score: float
 
 class RiskManager:
     """Manager for risk assessment and management."""
@@ -124,6 +92,11 @@ class RiskManager:
         # Risk metrics cache
         self.token_risk_cache = {}
         self.token_risk_cache_ttl = int(get_config_value("token_risk_cache_ttl", "3600"))  # 1 hour
+
+        self.risk_metrics_cache: Dict[str, RiskMetrics] = {}
+        self.position_limits: Dict[str, float] = {}
+        self.stop_loss_levels: Dict[str, List[float]] = {}
+        self.risk_scores: Dict[str, float] = {}
 
         logger.info(f"Initialized risk manager with {self.current_profile_name} profile")
 
@@ -188,101 +161,221 @@ class RiskManager:
 
         return risk_level
 
-    def calculate_position_size(self, token_mint: str, max_amount_sol: float = None) -> Dict[str, Any]:
+    def calculate_position_size(self, token_address: str, portfolio_value: float) -> float:
         """
-        Calculate the recommended position size for a token.
-
+        Calculate recommended position size based on risk metrics.
+        
         Args:
-            token_mint: The token mint address
-            max_amount_sol: Optional maximum amount in SOL
-
+            token_address: The token's address
+            portfolio_value: Total portfolio value in SOL
+            
         Returns:
-            Position size recommendation
+            Recommended position size in SOL
         """
-        if not self.enabled:
-            logger.warning("Risk management is disabled")
-            return {
-                "position_size_sol": max_amount_sol or 0.1,
-                "risk_level": RiskLevel.MEDIUM.value,
-                "stop_loss_percentage": 10.0
-            }
+        metrics = self.calculate_token_risk_metrics(token_address)
+        
+        # Base position size (5% of portfolio)
+        base_size = portfolio_value * 0.05
+        
+        # Adjust based on risk score
+        risk_adjustment = 1 - metrics.overall_risk_score
+        
+        # Apply minimum and maximum limits
+        min_size = portfolio_value * 0.01  # 1% minimum
+        max_size = portfolio_value * 0.20  # 20% maximum
+        
+        position_size = base_size * risk_adjustment
+        return max(min_size, min(max_size, position_size))
 
+    def calculate_dynamic_stop_loss(self, token_address: str, entry_price: float,
+                                  current_price: float) -> List[float]:
+        """
+        Calculate dynamic stop-loss levels based on risk metrics and price action.
+        
+        Args:
+            token_address: The token's address
+            entry_price: Entry price
+            current_price: Current price
+            
+        Returns:
+            List of stop-loss levels
+        """
+        metrics = self.calculate_token_risk_metrics(token_address)
+        
+        # Calculate price change percentage
+        price_change = (current_price - entry_price) / entry_price
+        
+        # Base stop-loss levels
+        if price_change >= 0.2:  # 20% profit
+            levels = [0.15, 0.10, 0.05]  # Tighter stops for profitable positions
+        elif price_change >= 0.1:  # 10% profit
+            levels = [0.08, 0.05, 0.03]
+        else:
+            levels = [0.05, 0.03, 0.02]  # Wider stops for new positions
+        
+        # Adjust based on risk score
+        risk_adjustment = 1 + metrics.overall_risk_score
+        levels = [level * risk_adjustment for level in levels]
+        
+        # Calculate actual stop prices
+        stop_prices = [current_price * (1 - level) for level in levels]
+        
+        self.stop_loss_levels[token_address] = stop_prices
+        return stop_prices
+
+    def should_close_position(self, token_address: str, entry_price: float,
+                            current_price: float) -> Tuple[bool, str]:
+        """
+        Determine if a position should be closed based on risk metrics and price action.
+        
+        Args:
+            token_address: The token's address
+            entry_price: Entry price
+            current_price: Current price
+            
+        Returns:
+            Tuple of (should_close, reason)
+        """
+        metrics = self.calculate_token_risk_metrics(token_address)
+        
+        # Check stop-loss levels
+        if token_address in self.stop_loss_levels:
+            for i, stop_price in enumerate(self.stop_loss_levels[token_address]):
+                if current_price <= stop_price:
+                    return True, f"Stop-loss level {i+1} triggered"
+        
+        # Check risk metrics
+        if metrics.overall_risk_score > 0.8:
+            return True, "Risk score too high"
+        
+        # Check price action
+        price_change = (current_price - entry_price) / entry_price
+        if price_change <= -0.1 and metrics.volatility > 0.3:
+            return True, "High volatility with significant loss"
+        
+        return False, ""
+
+    @cache_result(ttl=300)
+    def calculate_token_risk_metrics(self, token_address: str) -> RiskMetrics:
+        """
+        Calculate comprehensive risk metrics for a token.
+        
+        Args:
+            token_address: The token's address
+            
+        Returns:
+            RiskMetrics object containing various risk indicators
+        """
         try:
-            # Update portfolio value
-            self.update_portfolio_metrics()
-
-            # Get token risk level
-            risk_level = self.get_token_risk_level(token_mint)
-
-            # Get current profile
-            profile = self.get_current_profile()
-
-            # Calculate position size based on portfolio value and risk level
-            max_position_percent = profile.max_position_percent
-
-            # Adjust based on token risk level
-            if risk_level == RiskLevel.LOW:
-                position_percent = max_position_percent
-            elif risk_level == RiskLevel.MEDIUM:
-                position_percent = max_position_percent * 0.75
-            elif risk_level == RiskLevel.HIGH:
-                position_percent = max_position_percent * 0.5
-            else:  # VERY_HIGH
-                position_percent = max_position_percent * 0.25
-
-            # Calculate position size in SOL
-            position_size_sol = self.portfolio_value_sol * (position_percent / 100)
-
-            # Check if we're exceeding risk allocation limits
-            current_allocation = self.portfolio_allocation.get(risk_level.value, 0.0)
-            max_allocation = self.risk_allocation_limits.get(risk_level.value, 100.0)
-
-            # Calculate remaining allocation
-            remaining_allocation_sol = (self.portfolio_value_sol * (max_allocation / 100)) - current_allocation
-
-            # Adjust position size if needed
-            if position_size_sol > remaining_allocation_sol:
-                position_size_sol = remaining_allocation_sol
-                logger.info(f"Position size adjusted due to risk allocation limits: {position_size_sol} SOL")
-
-            # Apply max amount if specified
-            if max_amount_sol is not None and position_size_sol > max_amount_sol:
-                position_size_sol = max_amount_sol
-
-            # Ensure position size is positive
-            position_size_sol = max(position_size_sol, 0.01)
-
-            # Calculate stop-loss percentage based on risk level
-            if risk_level == RiskLevel.LOW:
-                stop_loss_percentage = profile.stop_loss_percent
-            elif risk_level == RiskLevel.MEDIUM:
-                stop_loss_percentage = profile.stop_loss_percent * 1.2
-            elif risk_level == RiskLevel.HIGH:
-                stop_loss_percentage = profile.stop_loss_percent * 1.5
-            else:  # VERY_HIGH
-                stop_loss_percentage = profile.stop_loss_percent * 2.0
-
-            return {
-                "position_size_sol": position_size_sol,
-                "position_size_percentage": position_percent,
-                "risk_level": risk_level.value,
-                "stop_loss_percentage": stop_loss_percentage,
-                "portfolio_value_sol": self.portfolio_value_sol,
-                "current_risk_allocation": {
-                    "low": self.portfolio_allocation[RiskLevel.LOW.value],
-                    "medium": self.portfolio_allocation[RiskLevel.MEDIUM.value],
-                    "high": self.portfolio_allocation[RiskLevel.HIGH.value],
-                    "very_high": self.portfolio_allocation[RiskLevel.VERY_HIGH.value]
-                }
-            }
+            # Get token analytics
+            analytics = token_analytics.get_token_analytics(token_address)
+            
+            # Calculate volatility (last 24h)
+            price_history = analytics.get('price_history', [])
+            volatility = np.std(price_history) if price_history else 1.0
+            
+            # Calculate liquidity score
+            liquidity = analytics.get('liquidity', 0)
+            liquidity_score = min(1.0, liquidity / 1000)  # Normalize to 0-1
+            
+            # Calculate holder distribution score
+            holders = analytics.get('holders', {})
+            holder_distribution = self._calculate_holder_distribution(holders)
+            
+            # Calculate contract risk
+            contract_risk = self._calculate_contract_risk(token_address)
+            
+            # Calculate social sentiment
+            sentiment = analytics.get('social_sentiment', 0.5)
+            
+            # Calculate overall risk score
+            overall_risk_score = self._calculate_overall_risk_score(
+                volatility, liquidity_score, holder_distribution,
+                contract_risk, sentiment
+            )
+            
+            metrics = RiskMetrics(
+                volatility=volatility,
+                liquidity_score=liquidity_score,
+                holder_distribution=holder_distribution,
+                contract_risk=contract_risk,
+                social_sentiment=sentiment,
+                overall_risk_score=overall_risk_score
+            )
+            
+            self.risk_metrics_cache[token_address] = metrics
+            return metrics
+            
         except Exception as e:
-            logger.error(f"Error calculating position size: {e}")
-            return {
-                "position_size_sol": max_amount_sol or 0.1,
-                "risk_level": RiskLevel.MEDIUM.value,
-                "stop_loss_percentage": 10.0,
-                "error": str(e)
+            logger.error(f"Error calculating risk metrics for {token_address}: {str(e)}")
+            return RiskMetrics(1.0, 0.0, 0.0, 1.0, 0.5, 1.0)  # Return high risk metrics
+    
+    def _calculate_holder_distribution(self, holders: Dict[str, float]) -> float:
+        """Calculate holder distribution score (0-1, higher is better)."""
+        if not holders:
+            return 0.0
+            
+        # Calculate Gini coefficient
+        values = sorted(holders.values())
+        n = len(values)
+        if n == 0:
+            return 0.0
+            
+        index = np.arange(1, n + 1)
+        return 1 - (2 * np.sum(index * values) / (n * np.sum(values)))
+    
+    def _calculate_contract_risk(self, token_address: str) -> float:
+        """Calculate contract risk score (0-1, higher is worse)."""
+        try:
+            # Get contract analysis
+            contract_analysis = token_analytics.get_contract_analysis(token_address)
+            
+            risk_factors = {
+                'has_blacklist': 0.3,
+                'has_whitelist': 0.2,
+                'has_pause': 0.2,
+                'has_freeze': 0.3,
+                'has_owner_controls': 0.2,
+                'is_verified': -0.3,
+                'has_locked_liquidity': -0.2
             }
+            
+            risk_score = 0.0
+            for factor, weight in risk_factors.items():
+                if contract_analysis.get(factor, False):
+                    risk_score += weight
+                    
+            return max(0.0, min(1.0, risk_score))
+            
+        except Exception as e:
+            logger.error(f"Error calculating contract risk: {str(e)}")
+            return 1.0
+    
+    def _calculate_overall_risk_score(self, volatility: float, liquidity_score: float,
+                                    holder_distribution: float, contract_risk: float,
+                                    sentiment: float) -> float:
+        """Calculate overall risk score (0-1, higher is worse)."""
+        weights = {
+            'volatility': 0.3,
+            'liquidity': 0.2,
+            'holder_distribution': 0.15,
+            'contract_risk': 0.25,
+            'sentiment': 0.1
+        }
+        
+        # Normalize volatility to 0-1
+        norm_volatility = min(1.0, volatility / 0.5)
+        
+        # Calculate weighted score
+        score = (
+            weights['volatility'] * norm_volatility +
+            weights['liquidity'] * (1 - liquidity_score) +
+            weights['holder_distribution'] * (1 - holder_distribution) +
+            weights['contract_risk'] * contract_risk +
+            weights['sentiment'] * (1 - sentiment)
+        )
+        
+        return max(0.0, min(1.0, score))
 
     def update_portfolio_metrics(self) -> Dict[str, Any]:
         """

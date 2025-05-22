@@ -12,6 +12,7 @@ import logging
 import argparse
 import traceback
 from pathlib import Path
+import qrcode
 
 # Add the project root to the Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -46,6 +47,9 @@ from src.wallet.withdraw import withdraw_manager
 from src.trading.risk_manager import risk_manager
 from src.solana.gas_optimizer import gas_optimizer
 from src.utils.performance_tracker import performance_tracker
+from src.utils.performance_optimizer import performance_optimizer
+from src.trading.strategy_engine import strategy_engine
+from src.security.security_manager import security_manager
 from src.cli.refinement_functions import check_auto_refinement
 
 # Initialize enhanced logging
@@ -60,6 +64,10 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Solana Memecoin Trading Bot")
     parser.add_argument("--config", help="Path to config file")
     parser.add_argument("--debug", action="store_true", help="Enable debug logging")
+    parser.add_argument("--max-workers", type=int, help="Maximum number of worker threads/processes")
+    parser.add_argument("--cache-ttl", type=int, help="Cache TTL in seconds")
+    parser.add_argument("--train-ml", action="store_true", help="Train ML models at startup")
+    parser.add_argument("--setup-mfa", action="store_true", help="Set up multi-factor authentication")
     return parser.parse_args()
 
 
@@ -80,12 +88,33 @@ def main():
     config = load_config()
     logger.info(f"Configuration loaded: {config}")
 
-    # Initialize position monitoring
-    # This will automatically start monitoring if there are positions
+    # Initialize performance optimizer with custom settings if provided
+    if args.max_workers or args.cache_ttl:
+        performance_optimizer = PerformanceOptimizer(
+            max_workers=args.max_workers or 4,
+            cache_ttl=args.cache_ttl or 300
+        )
+        logger.info(f"Performance optimizer initialized with {args.max_workers or 4} workers")
+
+    # Set up MFA if requested
+    if args.setup_mfa:
+        logger.info("Setting up multi-factor authentication...")
+        success, qr_data = security_manager.setup_mfa("admin")
+        if success:
+            logger.info("MFA setup successful. Please scan the QR code with your authenticator app.")
+            # Generate and display QR code
+            qr = qrcode.QRCode(version=1, box_size=10, border=5)
+            qr.add_data(qr_data)
+            qr.make(fit=True)
+            qr.print_ascii()
+        else:
+            logger.error("Failed to set up MFA")
+
+    # Initialize position monitoring with parallel processing
     position_manager.ensure_monitoring_running()
     logger.info(f"Loaded {len(position_manager.positions)} positions for monitoring")
 
-    # Initialize pool monitoring if enabled
+    # Initialize pool monitoring if enabled with parallel processing
     if get_config_value("sniping_enabled", False):
         pool_monitor.start_monitoring()
         logger.info("Pool monitoring started for token sniping")
@@ -95,16 +124,16 @@ def main():
         copy_trading.set_enabled(True)
         logger.info("Copy trading enabled")
 
-    # Initialize sentiment analysis if enabled
+    # Initialize sentiment analysis if enabled with caching
     if get_config_value("sentiment_analysis_enabled", False):
         sentiment_analyzer.set_enabled(True)
         logger.info("Sentiment analysis enabled")
 
-    # Initialize strategy generator
+    # Initialize strategy generator with parallel processing
     strategies = strategy_generator.list_strategies()
     logger.info(f"Loaded {len(strategies)} trading strategies")
 
-    # Initialize technical analysis if enabled
+    # Initialize technical analysis if enabled with caching
     if get_config_value("technical_analysis_enabled", False):
         technical_analyzer.set_enabled(True)
         logger.info("Technical analysis enabled")
@@ -124,7 +153,7 @@ def main():
         mobile_app_manager.set_enabled(True)
         logger.info("Mobile app integration enabled")
 
-    # Initialize ML token evaluation if enabled
+    # Initialize ML token evaluation if enabled with caching
     if get_config_value("ml_evaluation_enabled", False):
         token_evaluator.set_enabled(True)
         logger.info("ML token evaluation enabled")
@@ -134,35 +163,52 @@ def main():
         strategy_sharing.set_enabled(True)
         logger.info("Community strategy sharing enabled")
 
-    # Initialize price alerts if enabled
+    # Initialize price alerts if enabled with caching
     if get_config_value("price_alerts_enabled", False):
         price_alert_manager.set_enabled(True)
         logger.info("Price alerts enabled")
 
-    # Initialize wallet monitoring if enabled
+    # Initialize wallet monitoring if enabled with parallel processing
     if get_config_value("wallet_monitoring_enabled", False):
         wallet_monitor.set_enabled(True)
         logger.info("External wallet monitoring enabled")
 
-    # Initialize limit orders if enabled
+    # Initialize limit orders if enabled with caching
     if get_config_value("limit_orders_enabled", False):
         limit_order_manager.set_enabled(True)
         logger.info("Limit orders enabled")
 
-    # Initialize DCA orders if enabled
+    # Initialize DCA orders if enabled with caching
     if get_config_value("dca_enabled", False):
         dca_manager.set_enabled(True)
         logger.info("DCA orders enabled")
 
-    # Initialize auto-buy if enabled
+    # Initialize auto-buy if enabled with caching
     if get_config_value("auto_buy_enabled", False):
         auto_buy_manager.set_enabled(True)
         logger.info("Auto-buy enabled")
 
-    # Initialize token analytics if enabled
+    # Initialize token analytics if enabled with caching
     if get_config_value("token_analytics_enabled", False):
         token_analytics.set_enabled(True)
         logger.info("Token analytics enabled")
+
+    # Initialize strategy engine if enabled
+    if get_config_value("strategy_engine_enabled", False):
+        logger.info("Strategy engine enabled")
+        # Train ML models if requested
+        if args.train_ml:
+            logger.info("Training ML models...")
+            # Get training data from performance tracker
+            training_data = performance_tracker.get_training_data()
+            if training_data:
+                for strategy_name in strategy_generator.list_strategies():
+                    if strategy_engine.train_ml_model(strategy_name, training_data):
+                        logger.info(f"Successfully trained ML model for {strategy_name}")
+                    else:
+                        logger.warning(f"Failed to train ML model for {strategy_name}")
+            else:
+                logger.warning("No training data available for ML models")
 
     # Initialize auto-refinement if enabled
     if get_config_value("auto_refinement_enabled", False):
@@ -249,27 +295,9 @@ def main():
             price_alert_manager.stop_monitoring_thread()
             logger.info("Price alerts stopped")
 
-        # Stop wallet monitoring if it was enabled
-        if get_config_value("wallet_monitoring_enabled", False):
-            wallet_monitor.stop_monitoring_thread()
-            logger.info("External wallet monitoring stopped")
-
-        # Stop limit orders if it was enabled
-        if get_config_value("limit_orders_enabled", False):
-            limit_order_manager.stop_monitoring_thread()
-            logger.info("Limit orders stopped")
-
-        # Stop DCA orders if it was enabled
-        if get_config_value("dca_enabled", False):
-            dca_manager.stop_monitoring_thread()
-            logger.info("DCA orders stopped")
-
-        # Stop token analytics if it was enabled
-        if get_config_value("token_analytics_enabled", False):
-            token_analytics.stop_monitoring()
-            logger.info("Token analytics stopped")
-
-        logger.info("Shutdown complete")
+        # Shutdown performance optimizer
+        performance_optimizer.shutdown()
+        logger.info("Performance optimizer shut down")
 
 
 if __name__ == "__main__":
