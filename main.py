@@ -38,6 +38,11 @@ from src.trading.limit_orders import limit_order_manager
 from src.trading.dca_orders import dca_manager
 from src.trading.auto_buy import auto_buy_manager
 from src.trading.token_analytics import token_analytics
+from src.trading.backtesting_engine import backtesting_engine
+from src.trading.advanced_orders import advanced_order_manager
+from src.trading.portfolio_analytics import portfolio_analytics
+from src.trading.enhanced_portfolio_manager import enhanced_portfolio_manager
+from src.trading.advanced_alert_system import advanced_alert_system
 from src.charts.chart_generator import chart_generator
 from src.mobile.mobile_app import mobile_app_manager
 from src.ml.token_evaluator import token_evaluator
@@ -47,6 +52,13 @@ from src.trading.risk_manager import risk_manager
 from src.solana.gas_optimizer import gas_optimizer
 from src.utils.performance_tracker import performance_tracker
 from src.cli.refinement_functions import check_auto_refinement
+from src.utils.trading_safety import trading_safety
+
+# Phase 4 imports
+from src.trading.live_trading_engine import get_live_trading_engine
+from src.ml.advanced_ai_engine import get_advanced_ai_engine
+from src.trading.cross_chain_manager import get_cross_chain_manager
+from src.monitoring.metrics_collector import get_metrics_collector
 
 # Initialize enhanced logging
 init_logging()
@@ -79,6 +91,19 @@ def main():
     # Load configuration
     config = load_config()
     logger.info(f"Configuration loaded: {config}")
+
+    # Check trading mode and display startup warning
+    paper_trading_mode = get_config_value("paper_trading_mode", False)
+    is_live_mode = not paper_trading_mode
+
+    logger.info(f"Trading mode: {'LIVE' if is_live_mode else 'PAPER'}")
+
+    # Display startup safety warning and check prerequisites
+    if not trading_safety.display_startup_warning(is_live_mode):
+        logger.error("Startup safety check failed or user cancelled")
+        print("\n[ERROR] Bot startup cancelled due to safety check failure.")
+        print("Please review the configuration and try again.")
+        sys.exit(1)
 
     # Initialize position monitoring
     # This will automatically start monitoring if there are positions
@@ -164,6 +189,31 @@ def main():
         token_analytics.set_enabled(True)
         logger.info("Token analytics enabled")
 
+    # Initialize backtesting engine if enabled
+    if get_config_value("backtesting_enabled", False):
+        backtesting_engine.set_enabled(True)
+        logger.info("Backtesting engine enabled")
+
+    # Initialize advanced orders if enabled
+    if get_config_value("advanced_orders_enabled", False):
+        advanced_order_manager.set_enabled(True)
+        logger.info("Advanced orders enabled")
+
+    # Initialize portfolio analytics if enabled
+    if get_config_value("portfolio_analytics_enabled", False):
+        portfolio_analytics.set_enabled(True)
+        logger.info("Portfolio analytics enabled")
+
+    # Initialize enhanced portfolio management if enabled
+    if get_config_value("enhanced_portfolio_enabled", False):
+        enhanced_portfolio_manager.set_enabled(True)
+        logger.info("Enhanced portfolio management enabled")
+
+    # Initialize advanced alert system if enabled
+    if get_config_value("advanced_alerts_enabled", False):
+        advanced_alert_system.set_enabled(True)
+        logger.info("Advanced alert system enabled")
+
     # Initialize auto-refinement if enabled
     if get_config_value("auto_refinement_enabled", False):
         logger.info("Auto-refinement enabled")
@@ -171,6 +221,26 @@ def main():
         refinement_checks = performance_tracker.check_auto_refinement()
         if refinement_checks["risk"] or refinement_checks["gas"]:
             logger.info("Auto-refinement checks scheduled to run at startup")
+
+    # Phase 4: Initialize Live Trading Engine if enabled
+    if get_config_value("live_trading_enabled", False):
+        live_trading_engine = get_live_trading_engine(config)
+        logger.info("Live trading engine initialized")
+
+    # Phase 4: Initialize Advanced AI Engine if enabled
+    if get_config_value("deep_learning_enabled", False):
+        advanced_ai_engine = get_advanced_ai_engine(config)
+        logger.info("Advanced AI engine initialized")
+
+    # Phase 4: Initialize Cross-Chain Manager if enabled
+    if get_config_value("cross_chain_enabled", False):
+        cross_chain_manager = get_cross_chain_manager(config)
+        logger.info("Cross-chain manager initialized")
+
+    # Phase 4: Initialize Metrics Collector if enabled
+    if get_config_value("metrics_enabled", False):
+        metrics_collector = get_metrics_collector(config)
+        logger.info("Metrics collector initialized")
 
     # Log initialization complete with system info
     import platform
@@ -268,6 +338,21 @@ def main():
         if get_config_value("token_analytics_enabled", False):
             token_analytics.stop_monitoring()
             logger.info("Token analytics stopped")
+
+        # Stop advanced orders if it was enabled
+        if get_config_value("advanced_orders_enabled", False):
+            advanced_order_manager.stop_execution_thread()
+            logger.info("Advanced orders stopped")
+
+        # Stop enhanced portfolio management if it was enabled
+        if get_config_value("enhanced_portfolio_enabled", False):
+            enhanced_portfolio_manager.stop_monitoring()
+            logger.info("Enhanced portfolio management stopped")
+
+        # Stop advanced alert system if it was enabled
+        if get_config_value("advanced_alerts_enabled", False):
+            advanced_alert_system.stop_monitoring()
+            logger.info("Advanced alert system stopped")
 
         logger.info("Shutdown complete")
 

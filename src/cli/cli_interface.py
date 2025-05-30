@@ -67,7 +67,25 @@ menu_options = {
     "D": {"label": "Price Alerts", "function": "price_alerts"},
     "E": {"label": "Wallet Monitor", "function": "wallet_monitor"},
     "F": {"label": "Auto-Buy", "function": "auto_buy"},
-    "Q": {"label": "Exit", "function": "exit_app"}
+    "G": {"label": "Rapid Trading", "function": "rapid"},
+    "H": {"label": "Enhanced Copy Trading", "function": "enhanced_copy_trading"},
+    "I": {"label": "Portfolio Management", "function": "enhanced_portfolio"},
+    "J": {"label": "Advanced Alerts", "function": "advanced_alerts"},
+    "K": {"label": "Smart Copy Trading", "function": "smart_copy_trading"},
+    "L": {"label": "Multi-DEX Pool Hunter", "function": "multi_dex_hunting"},
+    "M": {"label": "Advanced Risk Analytics", "function": "advanced_risk_analytics"},
+    "N": {"label": "Smart Order Management", "function": "smart_order_management"},
+    "O": {"label": "Performance Attribution", "function": "performance_attribution"},
+    "P": {"label": "AI Pool Analysis", "function": "ai_pool_analysis"},
+    "Q": {"label": "Dynamic Portfolio Optimization", "function": "dynamic_portfolio_optimization"},
+    "R": {"label": "Enhanced AI Pool Analysis", "function": "enhanced_ai_pool_analysis"},
+    "S": {"label": "Advanced Benchmarking", "function": "advanced_benchmarking"},
+    "T": {"label": "Live Trading Engine", "function": "live_trading_engine"},
+    "U": {"label": "Advanced AI Predictions", "function": "advanced_ai_predictions"},
+    "V": {"label": "Cross-Chain Management", "function": "cross_chain_management"},
+    "W": {"label": "Enterprise API", "function": "enterprise_api"},
+    "X": {"label": "Production Monitoring", "function": "production_monitoring"},
+    "Y": {"label": "Exit", "function": "exit_app"}
 }
 
 # Function mapping
@@ -122,9 +140,12 @@ def print_menu():
     categories = {
         "Bot Control": ["1", "5"],  # Start Bot, Stop Bot
         "Information": ["2", "3", "4", "9"],  # Dashboard, Settings, Logs, Check Balance
-        "Trading": ["7", "8", "A", "B", "C", "F"],  # Buy, Sell, Withdraw, Limit Orders, DCA Orders, Auto-Buy
+        "Trading": ["7", "8", "A", "B", "C", "F", "G"],  # Buy, Sell, Withdraw, Limit Orders, DCA Orders, Auto-Buy, Rapid Trading
+        "Enhanced Features": ["H", "I", "J", "K", "L", "M", "N", "O", "P"],  # Enhanced Copy Trading, Portfolio Management, Advanced Alerts, Smart Copy Trading, Multi-DEX Pool Hunter, Advanced Risk Analytics, Smart Order Management, Performance Attribution, AI Pool Analysis
+        "Phase 3 - Advanced Optimization": ["Q", "R", "S"],  # Dynamic Portfolio Optimization, Enhanced AI Pool Analysis, Advanced Benchmarking
+        "Phase 4 - Production Features": ["T", "U", "V", "W", "X"],  # Live Trading Engine, Advanced AI Predictions, Cross-Chain Management, Enterprise API, Production Monitoring
         "Monitoring": ["D", "E"],  # Price Alerts, Wallet Monitor
-        "System": ["6", "Q"]  # Connect Wallet, Exit
+        "System": ["6", "Y"]  # Connect Wallet, Exit
     }
 
     # Create a panel for the menu

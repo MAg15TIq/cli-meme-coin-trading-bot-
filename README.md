@@ -19,20 +19,33 @@ The trading bot now features **real blockchain functionality** for all advanced 
 
 ## Features
 
+### Core Trading
 - **Secure Wallet Management**: Encrypted storage of wallet keys with multi-wallet support
 - **Solana Blockchain Integration**: Connect to Solana RPC endpoints with failover and load balancing
-- **Trading Capabilities**: Buy and sell tokens using Jupiter V6 DEX
+- **Trading Capabilities**: Buy and sell tokens using Jupiter V6 DEX with enhanced performance
 - **Rich Command-Line Interface**: Interactive CLI with numbered and lettered options
 - **Balance Checking**: View SOL and SPL token balances
 - **Position Tracking**: Monitor open positions with real-time price updates
 - **Automated Trading**: Stop-loss and take-profit orders execute automatically
+
+### Advanced Trading Features
+- **Backtesting Engine**: Test trading strategies against historical data with comprehensive metrics
+- **Advanced Order Types**: TWAP, VWAP, Iceberg, and Conditional orders for sophisticated execution
+- **Portfolio Analytics**: Real-time portfolio analysis with performance and risk metrics
 - **Advanced Priority Fee Management**: Dynamic fees with network congestion detection
 - **Multi-Tiered Take-Profits**: Set multiple take-profit levels with partial sells
 - **Token Sniping**: Automatically detect and buy new tokens when liquidity is added
 - **Copy Trading**: Copy trades from successful wallets you choose to track
 - **Whale Tracking**: Monitor specific wallets for trading activity
+
+### Analytics & Intelligence
 - **Social Sentiment Analysis**: Track and analyze social media mentions and sentiment
 - **AI Strategy Generation**: Create and backtest trading strategies
+- **Technical Analysis**: Advanced charting and technical indicators
+- **ML Token Evaluation**: Machine learning algorithms to assess token potential
+- **Performance Tracking**: Detailed metrics on your trading performance
+
+### Utility Features
 - **Withdraw Functionality**: Transfer SOL and SPL tokens to external wallets
 - **Price Alerts**: Set and receive alerts for specific price targets
 - **External Wallet Monitoring**: Track transactions of any Solana wallet
@@ -59,7 +72,7 @@ cli-trading-bot/
 │   ├── solana/
 │   │   └── solana_interact.py  # Solana blockchain interactions
 │   ├── trading/
-│   │   ├── jupiter_api.py      # Jupiter DEX integration
+│   │   ├── jupiter_api.py      # Enhanced Jupiter DEX integration with caching & async
 │   │   ├── position_manager.py # Position tracking and management
 │   │   ├── helius_api.py       # Helius API for wallet tracking
 │   │   ├── pool_monitor.py     # Liquidity pool monitoring and sniping
@@ -72,7 +85,10 @@ cli-trading-bot/
 │   │   ├── limit_orders.py     # Limit orders functionality
 │   │   ├── dca_orders.py       # DCA orders functionality
 │   │   ├── auto_buy.py         # Auto-buy functionality
-│   │   └── token_analytics.py  # Comprehensive token analytics
+│   │   ├── token_analytics.py  # Comprehensive token analytics
+│   │   ├── backtesting_engine.py # Strategy backtesting with historical data
+│   │   ├── advanced_orders.py  # TWAP, VWAP, Iceberg, Conditional orders
+│   │   └── portfolio_analytics.py # Real-time portfolio analysis & metrics
 │   ├── charts/
 │   │   └── chart_generator.py  # Chart generation for technical analysis
 │   ├── mobile/
@@ -124,8 +140,11 @@ For detailed configuration instructions, see `docs/configuration_guide.md`.
 ## Documentation
 
 - **Configuration Guide**: `docs/configuration_guide.md`
+- **Enhanced Features Guide**: `docs/enhanced_features_guide.md` - New advanced features
 - **Testing Guide**: `docs/testing_guide.md`
 - **User Guide**: `docs/user_guide.md`
+- **Risk Management**: `docs/risk_management.md`
+- **Gas Optimization**: `docs/gas_optimization.md`
 
 ## Usage
 

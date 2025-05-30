@@ -80,6 +80,33 @@ class PoolMonitor:
             "selfdestruct", "blacklist", "whitelist", "pause", "freeze", "owner"
         ])
 
+        # Advanced filtering settings
+        self.max_supply_concentration = float(get_config_value("max_supply_concentration", "20.0"))  # Max % held by top 10 wallets
+        self.min_trading_volume_24h = float(get_config_value("min_trading_volume_24h", "1.0"))  # Min 24h volume in SOL
+        self.max_price_impact_threshold = float(get_config_value("max_price_impact_threshold", "5.0"))  # Max price impact %
+        self.require_social_presence = get_config_value("require_social_presence", False)
+        self.min_liquidity_lock_duration = int(get_config_value("min_liquidity_lock_duration", "0"))  # Days
+
+        # Early entry settings
+        self.early_entry_enabled = get_config_value("early_entry_enabled", False)
+        self.early_entry_max_age_seconds = int(get_config_value("early_entry_max_age_seconds", "300"))  # 5 minutes
+        self.early_entry_multiplier = float(get_config_value("early_entry_multiplier", "2.0"))
+        self.early_entry_max_amount = float(get_config_value("early_entry_max_amount", "2.0"))
+
+        # Safety metrics
+        self.safety_score_threshold = float(get_config_value("safety_score_threshold", "70.0"))
+        self.enable_rugpull_detection = get_config_value("enable_rugpull_detection", True)
+        self.enable_whale_tracking = get_config_value("enable_whale_tracking", True)
+
+        # Pool discovery statistics
+        self.discovery_stats = {
+            "pools_discovered": 0,
+            "pools_filtered_out": 0,
+            "successful_snipes": 0,
+            "failed_snipes": 0,
+            "total_profit_loss": 0.0
+        }
+
         # Recently processed pools to avoid duplicates
         self.processed_pools = set()
         self.max_processed_pools = 1000

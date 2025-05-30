@@ -9,8 +9,55 @@ python-dotenv>=1.0.0
 websockets>=11.0.3
 numpy>=1.24.0
 pandas>=2.0.0
+scipy>=1.10.0
 scikit-learn>=1.2.0
 matplotlib>=3.7.0
 qrcode>=7.4.0
 pillow>=9.5.0
 firebase-admin>=6.1.0
+aiohttp>=3.8.0
+asyncio>=3.4.3
+
+# Phase 4 dependencies
+# Deep Learning & AI
+torch>=1.13.0
+transformers>=4.21.0
+stable-baselines3>=1.6.0
+
+# Real-time Data & Async
+websockets>=10.4
+asyncio-mqtt>=0.11.0
+redis>=4.3.0
+celery>=5.2.0
+
+# Cross-Chain
+web3>=6.0.0
+eth-account>=0.8.0
+brownie>=1.19.0
+
+# Enterprise & API
+fastapi>=0.85.0
+uvicorn>=0.18.0
+sqlalchemy>=1.4.0
+alembic>=1.8.0
+pydantic>=1.10.0
+pyjwt>=2.4.0
+
+# Monitoring & Production
+prometheus-client>=0.15.0
+grafana-api>=1.0.3
+elasticsearch>=8.4.0
+loguru>=0.6.0
+structlog>=22.1.0
+psutil>=5.9.0
+
+# Technical Analysis
+ta-lib>=0.4.25
+ccxt>=2.0.0
+
+# Optional Phase 4 dependencies (for advanced features)
+# xgboost>=1.7.0
+# lightgbm>=3.3.0
+# optuna>=3.0.0
+# tensorflow>=2.10.0
+# quantlib>=1.29

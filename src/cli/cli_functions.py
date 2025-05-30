@@ -37,11 +37,17 @@ from src.ml.token_evaluator import token_evaluator
 from src.community.strategy_sharing import strategy_sharing
 from src.wallet.withdraw import withdraw_manager
 from src.trading.risk_manager import risk_manager
+from src.trading.enhanced_portfolio_manager import enhanced_portfolio_manager
+from src.trading.advanced_alert_system import advanced_alert_system
 from src.solana.gas_optimizer import gas_optimizer, TransactionType, TransactionPriority
 from src.utils.performance_tracker import performance_tracker
 
 # Import the CLI interface to register functions
 from src.cli.cli_interface import register_function, console, bot_running, wallet_connected, wallet_pubkey, current_keypair
+from src.cli.enhanced_features_cli import (
+    enhanced_copy_trading_menu, enhanced_portfolio_menu, advanced_alerts_menu,
+    smart_copy_trading_menu, multi_dex_hunting_menu
+)
 
 # Get logger for this module
 logger = get_logger(__name__)
@@ -117,6 +123,28 @@ def start_bot():
         token_analytics.set_enabled(True)
         console.print("✓ Token analytics enabled")
 
+    # Initialize enhanced portfolio management if enabled
+    if get_config_value("enhanced_portfolio_enabled", False):
+        enhanced_portfolio_manager.set_enabled(True)
+        console.print("✓ Enhanced portfolio management enabled")
+
+    # Initialize advanced alert system if enabled
+    if get_config_value("advanced_alerts_enabled", False):
+        advanced_alert_system.set_enabled(True)
+        console.print("✓ Advanced alert system enabled")
+
+    # Initialize smart copy trading discovery if enabled
+    if get_config_value("smart_copy_discovery_enabled", False):
+        from src.trading.smart_wallet_discovery import smart_wallet_discovery
+        smart_wallet_discovery.set_enabled(True)
+        console.print("✓ Smart wallet discovery enabled")
+
+    # Initialize multi-DEX monitoring if enabled
+    if get_config_value("multi_dex_enabled", False):
+        from src.trading.multi_dex_monitor import multi_dex_monitor
+        multi_dex_monitor.set_enabled(True)
+        console.print("✓ Multi-DEX monitoring enabled")
+
     bot_running = True
     logger.info("Bot started successfully")
     console.print("[bold green]Bot started successfully![/bold green]")
@@ -183,6 +211,28 @@ def stop_bot():
     if get_config_value("token_analytics_enabled", False):
         token_analytics.stop_monitoring()
         console.print("+ Token analytics stopped")
+
+    # Stop enhanced portfolio management if it was enabled
+    if get_config_value("enhanced_portfolio_enabled", False):
+        enhanced_portfolio_manager.stop_monitoring()
+        console.print("+ Enhanced portfolio management stopped")
+
+    # Stop advanced alert system if it was enabled
+    if get_config_value("advanced_alerts_enabled", False):
+        advanced_alert_system.stop_monitoring()
+        console.print("+ Advanced alert system stopped")
+
+    # Stop smart copy trading discovery if it was enabled
+    if get_config_value("smart_copy_discovery_enabled", False):
+        from src.trading.smart_wallet_discovery import smart_wallet_discovery
+        smart_wallet_discovery.set_enabled(False)
+        console.print("+ Smart wallet discovery stopped")
+
+    # Stop multi-DEX monitoring if it was enabled
+    if get_config_value("multi_dex_enabled", False):
+        from src.trading.multi_dex_monitor import multi_dex_monitor
+        multi_dex_monitor.set_enabled(False)
+        console.print("+ Multi-DEX monitoring stopped")
 
     bot_running = False
     logger.info("Bot stopped successfully")
@@ -1066,6 +1116,13 @@ def register_all_functions():
     from src.cli.gas_functions import manage_gas, check_fees
     register_function("gas", manage_gas)
     register_function("fees", check_fees)
+
+    # Register rapid trading functions
+    register_function("rapid", rapid_trading_menu)
+    register_function("rbuy", rapid_buy)
+    register_function("rsell", rapid_sell)
+    register_function("rcancel", rapid_cancel)
+    register_function("rstatus", rapid_status)
 
 
 def token_analytics_function():
@@ -1956,6 +2013,421 @@ def clear_inactive_orders():
     input("Press Enter to continue...")
 
 
+def rapid_trading_menu():
+    """Display rapid trading menu and handle rapid trading operations."""
+    from src.trading.rapid_executor import rapid_executor
+    from src.trading.realtime_feed import realtime_feed
+
+    while True:
+        clear_screen()
+        console.print(Panel(
+            "[bold cyan]RAPID TRADING SYSTEM[/bold cyan]\n\n"
+            "[white]High-frequency trading with minimal latency[/white]",
+            title="Rapid Trading",
+            border_style="cyan"
+        ))
+
+        # Show system status
+        executor_stats = rapid_executor.get_performance_stats()
+        feed_stats = realtime_feed.get_performance_stats()
+
+        status_table = Table(title="System Status")
+        status_table.add_column("Component", style="cyan")
+        status_table.add_column("Status", style="green")
+        status_table.add_column("Metrics", style="yellow")
+
+        status_table.add_row(
+            "Rapid Executor",
+            "Running" if rapid_executor.running else "Stopped",
+            f"Success Rate: {executor_stats['success_rate']:.1%}, "
+            f"Avg Time: {executor_stats['average_execution_time']:.3f}s"
+        )
+
+        status_table.add_row(
+            "Real-time Feed",
+            "Connected" if feed_stats['connected'] else "Disconnected",
+            f"Latency: {feed_stats['average_latency_ms']:.1f}ms, "
+            f"Messages: {feed_stats['message_count']}"
+        )
+
+        console.print(status_table)
+
+        # Menu options
+        console.print("\n[bold cyan]Options:[/bold cyan]")
+        console.print("1. Start/Stop Rapid Executor")
+        console.print("2. Start/Stop Real-time Feed")
+        console.print("3. Rapid Buy (rbuy)")
+        console.print("4. Rapid Sell (rsell)")
+        console.print("5. View Active Orders")
+        console.print("6. Performance Statistics")
+        console.print("7. Back to Main Menu")
+
+        choice = input("\nEnter your choice: ").strip()
+
+        if choice == "1":
+            if rapid_executor.running:
+                rapid_executor.stop()
+                console.print("[green]Rapid executor stopped[/green]")
+            else:
+                rapid_executor.start()
+                console.print("[green]Rapid executor started[/green]")
+            input("Press Enter to continue...")
+
+        elif choice == "2":
+            if realtime_feed.connected:
+                realtime_feed.stop()
+                console.print("[green]Real-time feed stopped[/green]")
+            else:
+                realtime_feed.start()
+                console.print("[green]Real-time feed started[/green]")
+            input("Press Enter to continue...")
+
+        elif choice == "3":
+            rapid_buy()
+
+        elif choice == "4":
+            rapid_sell()
+
+        elif choice == "5":
+            show_active_rapid_orders()
+
+        elif choice == "6":
+            show_rapid_performance_stats()
+
+        elif choice == "7":
+            break
+
+        else:
+            console.print("[red]Invalid choice[/red]")
+            input("Press Enter to continue...")
+
+    return True
+
+
+def rapid_buy():
+    """Execute a rapid buy order."""
+    from src.trading.rapid_executor import rapid_executor
+
+    console.print(Panel(
+        "[bold cyan]RAPID BUY ORDER[/bold cyan]",
+        border_style="cyan"
+    ))
+
+    try:
+        # Get token mint
+        token_mint = input("Enter token mint address: ").strip()
+        if not token_mint:
+            console.print("[red]Token mint address is required[/red]")
+            input("Press Enter to continue...")
+            return True
+
+        # Get amount
+        amount_str = input("Enter SOL amount to spend: ").strip()
+        try:
+            amount = float(amount_str)
+            if amount <= 0:
+                raise ValueError("Amount must be positive")
+        except ValueError:
+            console.print("[red]Invalid amount[/red]")
+            input("Press Enter to continue...")
+            return True
+
+        # Get priority (optional)
+        priority_str = input("Enter priority (1-5, default 1): ").strip()
+        priority = 1
+        if priority_str:
+            try:
+                priority = int(priority_str)
+                if priority < 1 or priority > 5:
+                    priority = 1
+            except ValueError:
+                priority = 1
+
+        # Get price limit (optional)
+        price_limit = None
+        price_limit_str = input("Enter max price limit (optional): ").strip()
+        if price_limit_str:
+            try:
+                price_limit = float(price_limit_str)
+            except ValueError:
+                console.print("[yellow]Invalid price limit, proceeding without limit[/yellow]")
+
+        # Submit order
+        order_id = rapid_executor.submit_rapid_buy(
+            token_mint=token_mint,
+            amount_sol=amount,
+            priority=priority,
+            price_limit=price_limit
+        )
+
+        console.print(f"[green]Rapid buy order submitted: {order_id}[/green]")
+        console.print(f"Token: {token_mint}")
+        console.print(f"Amount: {amount} SOL")
+        console.print(f"Priority: {priority}")
+        if price_limit:
+            console.print(f"Price Limit: {price_limit}")
+
+    except Exception as e:
+        console.print(f"[red]Error submitting rapid buy order: {e}[/red]")
+
+    input("Press Enter to continue...")
+    return True
+
+
+def rapid_sell():
+    """Execute a rapid sell order."""
+    from src.trading.rapid_executor import rapid_executor
+    from src.trading.position_manager import position_manager
+
+    console.print(Panel(
+        "[bold cyan]RAPID SELL ORDER[/bold cyan]",
+        border_style="cyan"
+    ))
+
+    try:
+        # Show current positions
+        positions = position_manager.get_all_positions()
+        if not positions:
+            console.print("[yellow]No positions available to sell[/yellow]")
+            input("Press Enter to continue...")
+            return True
+
+        console.print("\n[bold cyan]Current Positions:[/bold cyan]")
+        for i, (token_mint, position) in enumerate(positions.items(), 1):
+            console.print(f"{i}. {position.token_name} ({token_mint[:8]}...)")
+            console.print(f"   Amount: {position.amount:.6f}")
+            console.print(f"   Current Price: {position.current_price:.8f} SOL")
+
+        # Get position selection
+        choice = input("\nSelect position number or enter token mint: ").strip()
+
+        token_mint = None
+        position = None
+
+        try:
+            # Try as position number
+            pos_num = int(choice)
+            if 1 <= pos_num <= len(positions):
+                token_mint = list(positions.keys())[pos_num - 1]
+                position = positions[token_mint]
+        except ValueError:
+            # Try as token mint
+            if choice in positions:
+                token_mint = choice
+                position = positions[token_mint]
+
+        if not token_mint or not position:
+            console.print("[red]Invalid selection[/red]")
+            input("Press Enter to continue...")
+            return True
+
+        # Get amount to sell
+        amount_str = input(f"Enter amount to sell (max: {position.amount:.6f}): ").strip()
+        try:
+            amount = float(amount_str)
+            if amount <= 0 or amount > position.amount:
+                raise ValueError("Invalid amount")
+        except ValueError:
+            console.print("[red]Invalid amount[/red]")
+            input("Press Enter to continue...")
+            return True
+
+        # Get priority
+        priority_str = input("Enter priority (1-5, default 1): ").strip()
+        priority = 1
+        if priority_str:
+            try:
+                priority = int(priority_str)
+                if priority < 1 or priority > 5:
+                    priority = 1
+            except ValueError:
+                priority = 1
+
+        # Get price limit (optional)
+        price_limit = None
+        price_limit_str = input("Enter min price limit (optional): ").strip()
+        if price_limit_str:
+            try:
+                price_limit = float(price_limit_str)
+            except ValueError:
+                console.print("[yellow]Invalid price limit, proceeding without limit[/yellow]")
+
+        # Submit order
+        order_id = rapid_executor.submit_rapid_sell(
+            token_mint=token_mint,
+            amount_tokens=amount,
+            priority=priority,
+            price_limit=price_limit
+        )
+
+        console.print(f"[green]Rapid sell order submitted: {order_id}[/green]")
+        console.print(f"Token: {position.token_name}")
+        console.print(f"Amount: {amount}")
+        console.print(f"Priority: {priority}")
+        if price_limit:
+            console.print(f"Price Limit: {price_limit}")
+
+    except Exception as e:
+        console.print(f"[red]Error submitting rapid sell order: {e}[/red]")
+
+    input("Press Enter to continue...")
+    return True
+
+
+def rapid_cancel():
+    """Cancel a rapid order."""
+    from src.trading.rapid_executor import rapid_executor
+
+    console.print(Panel(
+        "[bold cyan]CANCEL RAPID ORDER[/bold cyan]",
+        border_style="cyan"
+    ))
+
+    try:
+        order_id = input("Enter order ID to cancel: ").strip()
+        if not order_id:
+            console.print("[red]Order ID is required[/red]")
+            input("Press Enter to continue...")
+            return True
+
+        success = rapid_executor.cancel_order(order_id)
+        if success:
+            console.print(f"[green]Order {order_id} cancelled successfully[/green]")
+        else:
+            console.print(f"[red]Failed to cancel order {order_id} (not found or already executing)[/red]")
+
+    except Exception as e:
+        console.print(f"[red]Error cancelling order: {e}[/red]")
+
+    input("Press Enter to continue...")
+    return True
+
+
+def rapid_status():
+    """Show status of rapid orders."""
+    from src.trading.rapid_executor import rapid_executor
+
+    console.print(Panel(
+        "[bold cyan]RAPID ORDER STATUS[/bold cyan]",
+        border_style="cyan"
+    ))
+
+    try:
+        order_id = input("Enter order ID (or press Enter for all active orders): ").strip()
+
+        if order_id:
+            # Show specific order
+            status = rapid_executor.get_order_status(order_id)
+            console.print(f"\nOrder ID: {order_id}")
+            console.print(f"Status: {status['status']}")
+
+            if status['status'] == 'pending':
+                order = status['order']
+                console.print(f"Action: {order.action}")
+                console.print(f"Token: {order.token_mint}")
+                console.print(f"Amount: {order.amount}")
+                console.print(f"Priority: {order.priority}")
+                console.print(f"Submitted: {time.strftime('%H:%M:%S', time.localtime(order.timestamp))}")
+            elif status['status'] == 'completed':
+                result = status['result']
+                console.print(f"Success: {result.get('success', False)}")
+                if result.get('success'):
+                    console.print(f"Transaction: {result.get('tx_signature', 'N/A')}")
+                    console.print(f"Execution Time: {result.get('execution_time', 0):.3f}s")
+                else:
+                    console.print(f"Error: {result.get('error', 'Unknown error')}")
+        else:
+            # Show all active orders
+            stats = rapid_executor.get_performance_stats()
+            console.print(f"\nActive Orders: {stats['pending_orders']}")
+            console.print(f"Completed Orders: {stats['completed_orders']}")
+            console.print(f"Success Rate: {stats['success_rate']:.1%}")
+            console.print(f"Average Execution Time: {stats['average_execution_time']:.3f}s")
+
+    except Exception as e:
+        console.print(f"[red]Error getting order status: {e}[/red]")
+
+    input("Press Enter to continue...")
+    return True
+
+
+def show_active_rapid_orders():
+    """Show all active rapid orders."""
+    from src.trading.rapid_executor import rapid_executor
+
+    console.print(Panel(
+        "[bold cyan]ACTIVE RAPID ORDERS[/bold cyan]",
+        border_style="cyan"
+    ))
+
+    try:
+        # This would need to be implemented in rapid_executor
+        # For now, show basic stats
+        stats = rapid_executor.get_performance_stats()
+
+        table = Table(title="Order Statistics")
+        table.add_column("Metric", style="cyan")
+        table.add_column("Value", style="green")
+
+        table.add_row("Pending Orders", str(stats['pending_orders']))
+        table.add_row("Completed Orders", str(stats['completed_orders']))
+        table.add_row("Success Rate", f"{stats['success_rate']:.1%}")
+        table.add_row("Avg Execution Time", f"{stats['average_execution_time']:.3f}s")
+
+        console.print(table)
+
+    except Exception as e:
+        console.print(f"[red]Error showing active orders: {e}[/red]")
+
+    input("Press Enter to continue...")
+
+
+def show_rapid_performance_stats():
+    """Show detailed performance statistics for rapid trading."""
+    from src.trading.rapid_executor import rapid_executor
+    from src.trading.realtime_feed import realtime_feed
+
+    console.print(Panel(
+        "[bold cyan]RAPID TRADING PERFORMANCE[/bold cyan]",
+        border_style="cyan"
+    ))
+
+    try:
+        executor_stats = rapid_executor.get_performance_stats()
+        feed_stats = realtime_feed.get_performance_stats()
+
+        # Executor statistics
+        exec_table = Table(title="Execution Engine")
+        exec_table.add_column("Metric", style="cyan")
+        exec_table.add_column("Value", style="green")
+
+        exec_table.add_row("Total Orders", str(executor_stats['total_orders']))
+        exec_table.add_row("Successful Orders", str(executor_stats['successful_orders']))
+        exec_table.add_row("Success Rate", f"{executor_stats['success_rate']:.1%}")
+        exec_table.add_row("Average Execution Time", f"{executor_stats['average_execution_time']:.3f}s")
+        exec_table.add_row("Pending Orders", str(executor_stats['pending_orders']))
+
+        console.print(exec_table)
+
+        # Feed statistics
+        feed_table = Table(title="Real-time Data Feed")
+        feed_table.add_column("Metric", style="cyan")
+        feed_table.add_column("Value", style="green")
+
+        feed_table.add_row("Connection Status", "Connected" if feed_stats['connected'] else "Disconnected")
+        feed_table.add_row("Messages Received", str(feed_stats['message_count']))
+        feed_table.add_row("Average Latency", f"{feed_stats['average_latency_ms']:.1f}ms")
+        feed_table.add_row("Subscribed Tokens", str(feed_stats['subscribed_tokens']))
+        feed_table.add_row("Cached Prices", str(feed_stats['cached_prices']))
+
+        console.print(feed_table)
+
+    except Exception as e:
+        console.print(f"[red]Error showing performance stats: {e}[/red]")
+
+    input("Press Enter to continue...")
+
+
 def not_implemented(feature_name):
     """Placeholder for not implemented features."""
     console.print(f"[bold yellow]The {feature_name} feature is not implemented yet.[/bold yellow]")
@@ -1993,6 +2465,23 @@ def register_all_functions():
     register_function("withdraw", withdraw_function)
     register_function("token_analytics", token_analytics_function)
 
+    # Register enhanced features
+    register_function("enhanced_copy_trading", enhanced_copy_trading_menu)
+    register_function("enhanced_portfolio", enhanced_portfolio_menu)
+    register_function("advanced_alerts", advanced_alerts_menu)
+    register_function("smart_copy_trading", smart_copy_trading_menu)
+    register_function("multi_dex_hunting", multi_dex_hunting_menu)
+
+    # Register Phase 2 features
+    from src.cli.enhanced_features_cli import (
+        advanced_risk_analytics, smart_order_management,
+        performance_attribution, ai_pool_analysis
+    )
+    register_function("advanced_risk_analytics", advanced_risk_analytics)
+    register_function("smart_order_management", smart_order_management)
+    register_function("performance_attribution", performance_attribution)
+    register_function("ai_pool_analysis", ai_pool_analysis)
+
     # Import and register risk management functions
     from src.cli.risk_functions import manage_risk, check_portfolio
     register_function("risk", manage_risk)
@@ -2008,3 +2497,23 @@ def register_all_functions():
     register_function("refinement", manage_refinement)
     register_function("refine_risk", run_risk_refinement)
     register_function("refine_gas", run_gas_refinement)
+
+    # Register Phase 3 features
+    from src.cli.enhanced_features_cli import (
+        dynamic_portfolio_optimization_menu, enhanced_ai_pool_analysis_menu,
+        advanced_benchmarking_menu
+    )
+    register_function("dynamic_portfolio_optimization", dynamic_portfolio_optimization_menu)
+    register_function("enhanced_ai_pool_analysis", enhanced_ai_pool_analysis_menu)
+    register_function("advanced_benchmarking", advanced_benchmarking_menu)
+
+    # Register Phase 4 features
+    from src.cli.phase4_functions import (
+        live_trading_engine, advanced_ai_predictions, cross_chain_management,
+        enterprise_api, production_monitoring
+    )
+    register_function("live_trading_engine", live_trading_engine)
+    register_function("advanced_ai_predictions", advanced_ai_predictions)
+    register_function("cross_chain_management", cross_chain_management)
+    register_function("enterprise_api", enterprise_api)
+    register_function("production_monitoring", production_monitoring)

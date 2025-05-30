@@ -277,6 +277,209 @@ DEFAULT_CONFIG = {
     "last_gas_refinement": float(os.getenv("LAST_GAS_REFINEMENT", "0")),
     "min_trades_for_refinement": int(os.getenv("MIN_TRADES_FOR_REFINEMENT", "5")),
     "min_transactions_for_refinement": int(os.getenv("MIN_TRANSACTIONS_FOR_REFINEMENT", "10")),
+
+    # Backtesting settings
+    "backtesting_enabled": bool(os.getenv("BACKTESTING_ENABLED", "False").lower() == "true"),
+    "backtesting_data_path": os.getenv("BACKTESTING_DATA_PATH",
+                                      str(Path.home() / ".solana-trading-bot" / "backtesting_data")),
+    "backtesting_trading_fee": float(os.getenv("BACKTESTING_TRADING_FEE", "0.003")),  # 0.3%
+    "backtesting_slippage": float(os.getenv("BACKTESTING_SLIPPAGE", "0.001")),  # 0.1%
+
+    # Advanced orders settings
+    "advanced_orders_enabled": bool(os.getenv("ADVANCED_ORDERS_ENABLED", "False").lower() == "true"),
+    "advanced_orders_execution_interval": int(os.getenv("ADVANCED_ORDERS_EXECUTION_INTERVAL", "30")),  # seconds
+    "twap_default_interval_minutes": int(os.getenv("TWAP_DEFAULT_INTERVAL_MINUTES", "5")),
+    "vwap_default_participation_rate": float(os.getenv("VWAP_DEFAULT_PARTICIPATION_RATE", "0.1")),  # 10%
+    "iceberg_default_slice_percentage": float(os.getenv("ICEBERG_DEFAULT_SLICE_PERCENTAGE", "0.1")),  # 10%
+
+    # Portfolio analytics settings
+    "portfolio_analytics_enabled": bool(os.getenv("PORTFOLIO_ANALYTICS_ENABLED", "False").lower() == "true"),
+    "portfolio_analytics_data_path": os.getenv("PORTFOLIO_ANALYTICS_DATA_PATH",
+                                              str(Path.home() / ".solana-trading-bot" / "portfolio_data")),
+    "portfolio_snapshot_interval": int(os.getenv("PORTFOLIO_SNAPSHOT_INTERVAL", "300")),  # 5 minutes
+    "portfolio_max_snapshots": int(os.getenv("PORTFOLIO_MAX_SNAPSHOTS", "1000")),
+
+    # Enhanced portfolio management settings
+    "enhanced_portfolio_enabled": bool(os.getenv("ENHANCED_PORTFOLIO_ENABLED", "False").lower() == "true"),
+    "portfolio_allocation_strategy": os.getenv("PORTFOLIO_ALLOCATION_STRATEGY", "equal_weight"),
+    "portfolio_max_positions": int(os.getenv("PORTFOLIO_MAX_POSITIONS", "20")),
+    "portfolio_max_position_size": float(os.getenv("PORTFOLIO_MAX_POSITION_SIZE", "10.0")),
+    "portfolio_max_sector_allocation": float(os.getenv("PORTFOLIO_MAX_SECTOR_ALLOCATION", "30.0")),
+    "portfolio_min_liquidity": float(os.getenv("PORTFOLIO_MIN_LIQUIDITY", "1.0")),
+    "portfolio_max_correlation": float(os.getenv("PORTFOLIO_MAX_CORRELATION", "0.8")),
+    "portfolio_rebalance_threshold": float(os.getenv("PORTFOLIO_REBALANCE_THRESHOLD", "5.0")),
+    "portfolio_auto_rebalance": bool(os.getenv("PORTFOLIO_AUTO_REBALANCE", "False").lower() == "true"),
+    "portfolio_rebalance_frequency": int(os.getenv("PORTFOLIO_REBALANCE_FREQUENCY", "24")),  # hours
+    "portfolio_target_allocations": {},
+    "portfolio_sector_allocations": {},
+    "portfolio_last_rebalance": float(os.getenv("PORTFOLIO_LAST_REBALANCE", "0")),
+    "portfolio_performance_history": [],
+    "portfolio_benchmark_returns": [],
+    "portfolio_risk_budget": {
+        "low_risk": 40.0,
+        "medium_risk": 35.0,
+        "high_risk": 20.0,
+        "very_high_risk": 5.0
+    },
+
+    # Enhanced copy trading settings
+    "copy_tracked_wallets": {},
+    "copy_wallet_performance": {},
+    "copy_delay_seconds": int(os.getenv("COPY_DELAY_SECONDS", "5")),
+    "copy_max_position_size_sol": float(os.getenv("COPY_MAX_POSITION_SIZE_SOL", "5.0")),
+    "copy_stop_loss_percentage": float(os.getenv("COPY_STOP_LOSS_PERCENTAGE", "10.0")),
+    "copy_take_profit_percentage": float(os.getenv("COPY_TAKE_PROFIT_PERCENTAGE", "50.0")),
+    "copy_min_success_rate": float(os.getenv("COPY_MIN_SUCCESS_RATE", "60.0")),
+    "copy_min_profit_ratio": float(os.getenv("COPY_MIN_PROFIT_RATIO", "1.5")),
+    "copy_max_drawdown": float(os.getenv("COPY_MAX_DRAWDOWN", "30.0")),
+
+    # Enhanced pool monitoring settings
+    "max_supply_concentration": float(os.getenv("MAX_SUPPLY_CONCENTRATION", "20.0")),
+    "min_trading_volume_24h": float(os.getenv("MIN_TRADING_VOLUME_24H", "1.0")),
+    "max_price_impact_threshold": float(os.getenv("MAX_PRICE_IMPACT_THRESHOLD", "5.0")),
+    "require_social_presence": bool(os.getenv("REQUIRE_SOCIAL_PRESENCE", "False").lower() == "true"),
+    "min_liquidity_lock_duration": int(os.getenv("MIN_LIQUIDITY_LOCK_DURATION", "0")),
+    "early_entry_enabled": bool(os.getenv("EARLY_ENTRY_ENABLED", "False").lower() == "true"),
+    "early_entry_max_age_seconds": int(os.getenv("EARLY_ENTRY_MAX_AGE_SECONDS", "300")),
+    "early_entry_multiplier": float(os.getenv("EARLY_ENTRY_MULTIPLIER", "2.0")),
+    "early_entry_max_amount": float(os.getenv("EARLY_ENTRY_MAX_AMOUNT", "2.0")),
+    "safety_score_threshold": float(os.getenv("SAFETY_SCORE_THRESHOLD", "70.0")),
+    "enable_rugpull_detection": bool(os.getenv("ENABLE_RUGPULL_DETECTION", "True").lower() == "true"),
+    "enable_whale_tracking": bool(os.getenv("ENABLE_WHALE_TRACKING", "True").lower() == "true"),
+
+    # Advanced alert system settings
+    "advanced_alerts_enabled": bool(os.getenv("ADVANCED_ALERTS_ENABLED", "False").lower() == "true"),
+    "alert_monitoring_interval": int(os.getenv("ALERT_MONITORING_INTERVAL", "30")),  # seconds
+    "alert_price_check_interval": int(os.getenv("ALERT_PRICE_CHECK_INTERVAL", "10")),  # seconds
+    "alert_notifications_enabled": bool(os.getenv("ALERT_NOTIFICATIONS_ENABLED", "True").lower() == "true"),
+    "alert_notification_channels": ["console", "log"],
+    "alert_rate_limit_window": int(os.getenv("ALERT_RATE_LIMIT_WINDOW", "300")),  # 5 minutes
+    "max_alerts_per_window": int(os.getenv("MAX_ALERTS_PER_WINDOW", "10")),
+    "max_alert_history": int(os.getenv("MAX_ALERT_HISTORY", "1000")),
+    "alert_conditions": {},
+
+    # Smart copy trading settings
+    "smart_copy_discovery_enabled": bool(os.getenv("SMART_COPY_DISCOVERY_ENABLED", "False").lower() == "true"),
+    "wallet_discovery_interval_hours": int(os.getenv("WALLET_DISCOVERY_INTERVAL_HOURS", "24")),
+    "min_wallet_score": float(os.getenv("MIN_WALLET_SCORE", "70.0")),
+    "min_trades_for_discovery": int(os.getenv("MIN_TRADES_FOR_DISCOVERY", "10")),
+    "min_volume_for_discovery": float(os.getenv("MIN_VOLUME_FOR_DISCOVERY", "50.0")),
+    "copy_max_correlation": float(os.getenv("COPY_MAX_CORRELATION", "0.7")),
+    "copy_portfolio_limit": float(os.getenv("COPY_PORTFOLIO_LIMIT", "0.3")),
+
+    # Multi-DEX monitoring settings
+    "multi_dex_enabled": bool(os.getenv("MULTI_DEX_ENABLED", "False").lower() == "true"),
+    "arbitrage_detection_enabled": bool(os.getenv("ARBITRAGE_DETECTION_ENABLED", "False").lower() == "true"),
+    "min_arbitrage_profit_bps": int(os.getenv("MIN_ARBITRAGE_PROFIT_BPS", "50")),
+
+    # Phase 3: Dynamic Portfolio Optimization settings
+    "dynamic_optimization_enabled": bool(os.getenv("DYNAMIC_OPTIMIZATION_ENABLED", "False").lower() == "true"),
+    "optimization_method": os.getenv("OPTIMIZATION_METHOD", "mean_variance"),  # mean_variance, risk_parity, black_litterman
+    "rebalancing_frequency_hours": int(os.getenv("REBALANCING_FREQUENCY_HOURS", "24")),
+    "optimization_lookback_days": int(os.getenv("OPTIMIZATION_LOOKBACK_DAYS", "30")),
+    "max_portfolio_turnover": float(os.getenv("MAX_PORTFOLIO_TURNOVER", "0.2")),
+    "regime_detection_enabled": bool(os.getenv("REGIME_DETECTION_ENABLED", "True").lower() == "true"),
+    "efficient_frontier_points": int(os.getenv("EFFICIENT_FRONTIER_POINTS", "100")),
+
+    # Phase 3: Enhanced AI Pool Analysis settings
+    "enhanced_ai_analysis_enabled": bool(os.getenv("ENHANCED_AI_ANALYSIS_ENABLED", "False").lower() == "true"),
+    "model_retraining_enabled": bool(os.getenv("MODEL_RETRAINING_ENABLED", "True").lower() == "true"),
+    "model_update_frequency_hours": int(os.getenv("MODEL_UPDATE_FREQUENCY_HOURS", "6")),
+    "ensemble_models_enabled": bool(os.getenv("ENSEMBLE_MODELS_ENABLED", "True").lower() == "true"),
+    "cross_chain_analysis_enabled": bool(os.getenv("CROSS_CHAIN_ANALYSIS_ENABLED", "False").lower() == "true"),
+    "model_storage_path": os.getenv("MODEL_STORAGE_PATH", str(Path.home() / ".solana-trading-bot" / "models")),
+    "feature_importance_threshold": float(os.getenv("FEATURE_IMPORTANCE_THRESHOLD", "0.01")),
+
+    # Phase 3: Advanced Benchmarking settings
+    "advanced_benchmarking_enabled": bool(os.getenv("ADVANCED_BENCHMARKING_ENABLED", "False").lower() == "true"),
+    "benchmark_update_frequency_hours": int(os.getenv("BENCHMARK_UPDATE_FREQUENCY_HOURS", "1")),
+    "performance_forecasting_enabled": bool(os.getenv("PERFORMANCE_FORECASTING_ENABLED", "True").lower() == "true"),
+    "custom_benchmarks": [],
+    "risk_free_rate": float(os.getenv("RISK_FREE_RATE", "0.02")),  # 2% annual
+    "factor_analysis_enabled": bool(os.getenv("FACTOR_ANALYSIS_ENABLED", "True").lower() == "true"),
+    "monte_carlo_simulations": int(os.getenv("MONTE_CARLO_SIMULATIONS", "1000")),
+    "forecast_confidence_levels": [0.05, 0.25, 0.5, 0.75, 0.95],
+
+    # Phase 4: Live Trading & Real Data
+    "live_trading_enabled": bool(os.getenv("LIVE_TRADING_ENABLED", "False").lower() == "true"),
+    "paper_trading_mode": bool(os.getenv("PAPER_TRADING_MODE", "False").lower() == "true"),
+    "max_daily_loss_limit": float(os.getenv("MAX_DAILY_LOSS_LIMIT", "1000.0")),
+    "emergency_stop_enabled": bool(os.getenv("EMERGENCY_STOP_ENABLED", "True").lower() == "true"),
+    "execution_latency_target_ms": int(os.getenv("EXECUTION_LATENCY_TARGET_MS", "100")),
+    "real_data_feeds_enabled": bool(os.getenv("REAL_DATA_FEEDS_ENABLED", "False").lower() == "true"),
+    "websocket_feeds_enabled": bool(os.getenv("WEBSOCKET_FEEDS_ENABLED", "False").lower() == "true"),
+    "historical_data_collection_enabled": bool(os.getenv("HISTORICAL_DATA_COLLECTION_ENABLED", "False").lower() == "true"),
+    "data_validation_enabled": bool(os.getenv("DATA_VALIDATION_ENABLED", "True").lower() == "true"),
+
+    # Phase 4: Advanced AI & Machine Learning
+    "deep_learning_enabled": bool(os.getenv("DEEP_LEARNING_ENABLED", "False").lower() == "true"),
+    "model_training_enabled": bool(os.getenv("MODEL_TRAINING_ENABLED", "True").lower() == "true"),
+    "reinforcement_learning_enabled": bool(os.getenv("REINFORCEMENT_LEARNING_ENABLED", "False").lower() == "true"),
+    "sentiment_analysis_enabled": bool(os.getenv("SENTIMENT_ANALYSIS_ENABLED", "True").lower() == "true"),
+    "pattern_recognition_enabled": bool(os.getenv("PATTERN_RECOGNITION_ENABLED", "True").lower() == "true"),
+    "lstm_models_enabled": bool(os.getenv("LSTM_MODELS_ENABLED", "False").lower() == "true"),
+    "transformer_models_enabled": bool(os.getenv("TRANSFORMER_MODELS_ENABLED", "False").lower() == "true"),
+    "ensemble_ai_enabled": bool(os.getenv("ENSEMBLE_AI_ENABLED", "True").lower() == "true"),
+    "ai_model_retraining_hours": int(os.getenv("AI_MODEL_RETRAINING_HOURS", "24")),
+    "ai_confidence_threshold": float(os.getenv("AI_CONFIDENCE_THRESHOLD", "0.7")),
+    "ai_model_storage_path": os.getenv("AI_MODEL_STORAGE_PATH", str(Path.home() / ".solana-trading-bot" / "ai_models")),
+
+    # Phase 4: Cross-Chain Integration
+    "cross_chain_enabled": bool(os.getenv("CROSS_CHAIN_ENABLED", "False").lower() == "true"),
+    "ethereum_enabled": bool(os.getenv("ETHEREUM_ENABLED", "False").lower() == "true"),
+    "bsc_enabled": bool(os.getenv("BSC_ENABLED", "False").lower() == "true"),
+    "polygon_enabled": bool(os.getenv("POLYGON_ENABLED", "False").lower() == "true"),
+    "cross_chain_arbitrage_enabled": bool(os.getenv("CROSS_CHAIN_ARBITRAGE_ENABLED", "False").lower() == "true"),
+    "min_arbitrage_profit_percentage": float(os.getenv("MIN_ARBITRAGE_PROFIT_PERCENTAGE", "1.0")),
+    "bridge_cost_estimation_enabled": bool(os.getenv("BRIDGE_COST_ESTIMATION_ENABLED", "True").lower() == "true"),
+    "cross_chain_portfolio_enabled": bool(os.getenv("CROSS_CHAIN_PORTFOLIO_ENABLED", "False").lower() == "true"),
+    "ethereum_rpc_url": os.getenv("ETHEREUM_RPC_URL", "https://mainnet.infura.io/v3/YOUR_PROJECT_ID"),
+    "bsc_rpc_url": os.getenv("BSC_RPC_URL", "https://bsc-dataseed1.binance.org/"),
+    "polygon_rpc_url": os.getenv("POLYGON_RPC_URL", "https://polygon-rpc.com/"),
+
+    # Phase 4: Enterprise Features
+    "api_enabled": bool(os.getenv("API_ENABLED", "False").lower() == "true"),
+    "api_host": os.getenv("API_HOST", "0.0.0.0"),
+    "api_port": int(os.getenv("API_PORT", "8000")),
+    "api_workers": int(os.getenv("API_WORKERS", "1")),
+    "multi_user_enabled": bool(os.getenv("MULTI_USER_ENABLED", "False").lower() == "true"),
+    "database_enabled": bool(os.getenv("DATABASE_ENABLED", "False").lower() == "true"),
+    "database_url": os.getenv("DATABASE_URL", "postgresql://user:password@localhost/trading_bot"),
+    "redis_enabled": bool(os.getenv("REDIS_ENABLED", "False").lower() == "true"),
+    "redis_host": os.getenv("REDIS_HOST", "localhost"),
+    "redis_port": int(os.getenv("REDIS_PORT", "6379")),
+    "authentication_required": bool(os.getenv("AUTHENTICATION_REQUIRED", "True").lower() == "true"),
+    "jwt_secret_key": os.getenv("JWT_SECRET_KEY", "your-secret-key-here"),
+    "rate_limiting_enabled": bool(os.getenv("RATE_LIMITING_ENABLED", "True").lower() == "true"),
+    "api_rate_limit_requests": int(os.getenv("API_RATE_LIMIT_REQUESTS", "100")),
+    "api_rate_limit_window": int(os.getenv("API_RATE_LIMIT_WINDOW", "60")),
+
+    # Phase 4: Production Monitoring
+    "metrics_enabled": bool(os.getenv("METRICS_ENABLED", "True").lower() == "true"),
+    "metrics_port": int(os.getenv("METRICS_PORT", "9090")),
+    "health_checks_enabled": bool(os.getenv("HEALTH_CHECKS_ENABLED", "True").lower() == "true"),
+    "health_check_interval": int(os.getenv("HEALTH_CHECK_INTERVAL", "30")),
+    "alerting_enabled": bool(os.getenv("ALERTING_ENABLED", "False").lower() == "true"),
+    "email_notifications_enabled": bool(os.getenv("EMAIL_NOTIFICATIONS_ENABLED", "False").lower() == "true"),
+    "slack_notifications_enabled": bool(os.getenv("SLACK_NOTIFICATIONS_ENABLED", "False").lower() == "true"),
+    "smtp_server": os.getenv("SMTP_SERVER", "localhost"),
+    "smtp_port": int(os.getenv("SMTP_PORT", "587")),
+    "smtp_username": os.getenv("SMTP_USERNAME", ""),
+    "smtp_password": os.getenv("SMTP_PASSWORD", ""),
+    "alert_recipients": [],
+    "slack_webhook_url": os.getenv("SLACK_WEBHOOK_URL", ""),
+    "logging_level": os.getenv("LOGGING_LEVEL", "INFO"),
+    "structured_logging_enabled": bool(os.getenv("STRUCTURED_LOGGING_ENABLED", "True").lower() == "true"),
+    "performance_monitoring_enabled": bool(os.getenv("PERFORMANCE_MONITORING_ENABLED", "True").lower() == "true"),
+    "log_aggregation_enabled": bool(os.getenv("LOG_AGGREGATION_ENABLED", "False").lower() == "true"),
+    "elasticsearch_url": os.getenv("ELASTICSEARCH_URL", "http://localhost:9200"),
+
+    # Trading Safety Settings
+    "trading_safety_checks_enabled": bool(os.getenv("TRADING_SAFETY_CHECKS_ENABLED", "True").lower() == "true"),
+    "require_risk_acknowledgment": bool(os.getenv("REQUIRE_RISK_ACKNOWLEDGMENT", "True").lower() == "true"),
+    "min_wallet_balance_sol": float(os.getenv("MIN_WALLET_BALANCE_SOL", "0.01")),
+    "startup_safety_warning_enabled": bool(os.getenv("STARTUP_SAFETY_WARNING_ENABLED", "True").lower() == "true"),
+    "live_trading_confirmation_required": bool(os.getenv("LIVE_TRADING_CONFIRMATION_REQUIRED", "True").lower() == "true"),
 }
 
 # Config file path
